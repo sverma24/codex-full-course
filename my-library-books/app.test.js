@@ -17,10 +17,6 @@ function openPage(books) {
     appendChild(row) {
       rows.push(row);
     },
-    addEventListener(type, listener) {
-      assert.equal(type, 'click');
-      this.click = listener;
-    },
   };
   const elements = {
     books: list,
@@ -50,9 +46,9 @@ function openPage(books) {
     rows,
     savedBooks: () => JSON.parse(storage.get('my-library-books')),
     clickReturned(row) {
-      const button = row.innerHTML.match(/<button data-title="([^"]+)">Returned<\/button>/);
+      const button = row.innerHTML.match(/<button data-index="([0-9]+)">Returned<\/button>/);
       assert.ok(button, 'row has a Returned button');
-      list.click({ target: { tagName: 'BUTTON', dataset: { title: button[1] } } });
+      list.onclick({ target: { tagName: 'BUTTON', dataset: { index: button[1] } } });
     },
   };
 }
@@ -72,18 +68,23 @@ for (const [label, due, status, feeMarkup] of statuses) {
   });
 }
 
-test('clicking Returned removes both books with the same title', () => {
-  const first = { title: 'Collected Poems', author: 'First Author', due: '2026-11-14' };
-  const second = { title: 'Collected Poems', author: 'Second Author', due: '2026-11-15' };
+test('clicking Returned removes only the selected copy from legacy saved books', () => {
+  const first = { title: 'Dracula', author: 'Bram Stoker', due: '2026-11-15' };
+  const second = { ...first, due: '2026-11-14' };
   const other = { title: 'Walden', author: 'Henry David Thoreau', due: '2026-11-19' };
   const page = openPage([first, second, other]);
 
   assert.equal(page.rows.length, 3);
-  const clickedRow = page.rows.find((row) => row.innerHTML.includes('<span>Second Author</span>'));
-  assert.ok(clickedRow);
-  page.clickReturned(clickedRow);
+  assert.ok(page.rows[0].innerHTML.includes('Due today'));
+  page.clickReturned(page.rows[0]);
 
-  assert.deepEqual(page.savedBooks(), [other]);
-  assert.equal(page.rows.length, 1);
-  assert.ok(page.rows[0].innerHTML.includes('<strong>Walden</strong>'));
+  assert.deepEqual(page.savedBooks(), [first, other]);
+  assert.equal(page.rows.length, 2);
+  assert.ok(page.rows[0].innerHTML.includes('<strong>Dracula</strong>'));
+  assert.ok(page.rows[0].innerHTML.includes('Due tomorrow'));
+  assert.ok(page.rows[1].innerHTML.includes('<strong>Walden</strong>'));
+
+  const reopened = openPage(page.savedBooks());
+  reopened.clickReturned(reopened.rows[0]);
+  assert.deepEqual(reopened.savedBooks(), [other]);
 });
