@@ -6,3 +6,4 @@
 - `app.js` holds the page code.
 - Change how the page looks only when the user asks.
 - For every bug, first add a test and verify it fails. Then fix the bug and verify the test passes.
+- Never edit, skip or delete a test just to make it pass. Ask me first.

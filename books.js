@@ -28,7 +28,7 @@ function isOverdue(dueDate, today) {
 function lateFee(dueDate, today) {
   const daysLate = -daysLeft(dueDate, today);
   if (daysLate <= 0) return 0;
-  return Math.max(daysLate * FEE_PER_DAY, FEE_CAP);
+  return Math.min(daysLate * FEE_PER_DAY, FEE_CAP);
 }
 
 function dueSortKey(due) {
