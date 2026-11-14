@@ -11,3 +11,4 @@ Your books are saved in your browser.
 - Late fees are **25 cents a day**, starting the day **after** the due date.
 - A book never costs more than **$5.00** in late fees.
 - The list shows the book that's due **soonest at the top**.
+Tests run automatically after every Codex edit (see .codex/hooks.json).
