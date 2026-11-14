@@ -2,6 +2,10 @@
 
 The code for the course "OpenAI Codex Full Course for Beginners: Agentic Coding A–Z".
 
+## Live app
+
+The finished app from the course is live at **https://sverma24.github.io/codex-full-course/** (published from the `gh-pages` branch).
+
 ## What's here
 
 | Folder | What it is |
@@ -48,6 +52,9 @@ Every chapter that changes the app has a git tag, so you can see the code exactl
 | `ch4.4-start` / `ch4.4` | A project hook in `.codex/hooks.json` that runs `npm test` after Codex works |
 | `ch5.1` | Export CSV, built by two subagents (implementer + independent tester) |
 | `ch5.2` | A search box and an overdue count, built at the same time in two worktrees, then merged |
+| `ch6.2` | Renewed button and Due soon banner, built from a written spec by two parallel subagents |
+| `ch6.4` | A code-review finding fixed before launch (malformed renewal counts) |
+| `ch6.6` | Two post-launch fixes: the phone layout, and one shared cache version so updates never mix old and new files |
 | `ch4.6` | The late-fees total moved into a red box above the list, asked for with an annotation in the in-app browser |
 
 Chapters 2.1, 2.7, 3.1 to 3.3 and 4.5 don't change the app, so they have no tag.
