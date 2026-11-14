@@ -4,9 +4,20 @@ const FEE_PER_DAY = 0.25; // dollars
 const FEE_CAP = 5.0; // never charge more than this per book
 const DAY = 24 * 60 * 60 * 1000;
 
-// Whole days from today until the due date. Negative means late.
+// Use UTC midnight to count calendar days without daylight-saving shifts.
+function calendarDay(value) {
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return Date.parse(value);
+  }
+
+  const local = new Date(value);
+  const midnight = new Date(0);
+  return midnight.setUTCFullYear(local.getFullYear(), local.getMonth(), local.getDate());
+}
+
+// Calendar days from today until the due date. Negative means late.
 function daysLeft(dueDate, today) {
-  return Math.floor((new Date(dueDate) - new Date(today)) / DAY);
+  return (calendarDay(dueDate) - calendarDay(today)) / DAY;
 }
 
 function isOverdue(dueDate, today) {
