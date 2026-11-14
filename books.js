@@ -24,11 +24,11 @@ function isOverdue(dueDate, today) {
   return daysLeft(dueDate, today) < 0;
 }
 
-// 25 cents for every day after the due date.
+// 25 cents for every day after the due date, up to the fee cap.
 function lateFee(dueDate, today) {
   const daysLate = -daysLeft(dueDate, today);
   if (daysLate <= 0) return 0;
-  return daysLate * FEE_PER_DAY;
+  return Math.min(daysLate * FEE_PER_DAY, FEE_CAP);
 }
 
 // Soonest due first.
