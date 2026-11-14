@@ -1,0 +1,9 @@
+{
+  "name": "my-library-books",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Keep track of the library books you've borrowed",
+  "scripts": {
+    "test": "node --test"
+  }
+}
