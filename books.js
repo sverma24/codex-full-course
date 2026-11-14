@@ -31,9 +31,23 @@ function lateFee(dueDate, today) {
   return Math.min(daysLate * FEE_PER_DAY, FEE_CAP);
 }
 
-// Soonest due first.
+function dueSortKey(due) {
+  if (typeof due !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(due)) return Infinity;
+
+  const day = calendarDay(due);
+  if (!Number.isFinite(day) || new Date(day).toISOString().slice(0, 10) !== due) {
+    return Infinity;
+  }
+  return day;
+}
+
+// Soonest due first, with invalid dates last in their original order.
 function sortByDue(books) {
-  return books.slice().sort((a, b) => a.due > b.due);
+  return books.slice().sort((a, b) => {
+    const first = dueSortKey(a.due);
+    const second = dueSortKey(b.due);
+    return first === second ? 0 : first - second;
+  });
 }
 
 if (typeof module !== 'undefined') {
