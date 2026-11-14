@@ -31,6 +31,14 @@ function lateFee(dueDate, today) {
   return Math.min(daysLate * FEE_PER_DAY, FEE_CAP);
 }
 
+function statusText(book, now) {
+  const left = daysLeft(book.due, now);
+  if (left < 0) return 'Overdue by ' + -left + (left === -1 ? ' day' : ' days');
+  if (left === 0) return 'Due today';
+  if (left === 1) return 'Due tomorrow';
+  return 'Due in ' + left + ' days';
+}
+
 function dueSortKey(due) {
   if (typeof due !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(due)) return Infinity;
 
@@ -51,5 +59,5 @@ function sortByDue(books) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { FEE_PER_DAY, FEE_CAP, daysLeft, isOverdue, lateFee, sortByDue };
+  module.exports = { FEE_PER_DAY, FEE_CAP, daysLeft, isOverdue, lateFee, statusText, sortByDue };
 }

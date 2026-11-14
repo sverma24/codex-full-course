@@ -32,14 +32,6 @@ function save(books) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
 }
 
-function statusText(book, now) {
-  const left = daysLeft(book.due, now);
-  if (left < 0) return 'Overdue by ' + -left + (left === -1 ? ' day' : ' days');
-  if (left === 0) return 'Due today';
-  if (left === 1) return 'Due tomorrow';
-  return 'Due in ' + left + ' days';
-}
-
 function returnBook(button, books, saved) {
   if (button.tagName !== 'BUTTON') return;
 
