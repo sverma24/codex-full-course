@@ -7,3 +7,4 @@
 - Change how the page looks only when the user asks.
 - For every bug, first add a test and verify it fails. Then fix the bug and verify the test passes.
 - Never edit, skip or delete a test just to make it pass. Ask me first.
+- When you change style.css, books.js or app.js, bump the shared ?v= number in index.html so readers never get a mix of old and new files.
