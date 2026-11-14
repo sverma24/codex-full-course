@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "library": {
+      "command": "node",
+      "args": ["server/library-server.js"],
+      "cwd": "."
+    }
+  }
+}

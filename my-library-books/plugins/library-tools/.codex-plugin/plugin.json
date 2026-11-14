@@ -1,0 +1,7 @@
+{
+  "name": "library-tools",
+  "version": "1.0.0",
+  "description": "Library bug-fixing skill and book status MCP tool.",
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json"
+}
