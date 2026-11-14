@@ -160,6 +160,17 @@ function openPage(books, now = [2026, 10, 14, 15]) {
   };
 }
 
+test('all local page assets share one cache version', () => {
+  const references = [...pageMarkup.matchAll(/(?:src|href)="([^"]+)"/g)]
+    .map((match) => match[1])
+    .filter((reference) => !/^(?:[a-z]+:|#|\/\/)/i.test(reference));
+  const versions = references.map((reference) => new URL(reference, 'https://library.invalid/').searchParams.get('v'));
+
+  assert.ok(references.length > 0, 'the page references local assets');
+  assert.ok(versions.every(Boolean), 'every local asset has an explicit cache version');
+  assert.equal(new Set(versions).size, 1, 'all local assets use the same cache version');
+});
+
 test('Due soon lists today first, then the next three local calendar days', () => {
   const page = openPage([
     { title: 'Day three', due: '2026-11-17' },
