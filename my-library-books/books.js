@@ -50,7 +50,10 @@ function dueSortKey(due) {
 }
 
 function renewalDetails(book) {
-  const renewalCount = book.renewalCount ?? 0;
+  const savedRenewalCount = book.renewalCount;
+  const renewalCount = Number.isInteger(savedRenewalCount) && savedRenewalCount >= 0
+    ? savedRenewalCount
+    : 0;
   if (renewalCount >= 2) return { reason: 'Renewal limit reached.' };
 
   const day = dueSortKey(book.due);
