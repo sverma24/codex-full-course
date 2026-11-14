@@ -57,11 +57,20 @@ function render() {
   document.getElementById('total').textContent = '$' + total.toFixed(2);
 }
 
-// TODO(codex): if the title or the due date is empty, don't save the book.
-// Show a short message under the form instead, like "Please add a title and a due date."
-document.getElementById('add').addEventListener('submit', (e) => {
+const addForm = document.getElementById('add');
+const addMessage = document.createElement('div');
+addMessage.setAttribute('role', 'status');
+addForm.after(addMessage);
+
+addForm.addEventListener('submit', (e) => {
   e.preventDefault();
   const form = e.target;
+  if (!form.title.value.trim() || !form.due.value) {
+    addMessage.textContent = 'Please add a title and a due date.';
+    return;
+  }
+
+  addMessage.textContent = '';
   const books = load();
   books.push({ title: form.title.value, author: form.author.value, due: form.due.value });
   save(books);
