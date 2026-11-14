@@ -72,6 +72,7 @@ function render() {
   const now = new Date();
   const saved = localStorage.getItem(STORAGE_KEY);
   const books = load(saved);
+  const query = document.getElementById('search').value.trim().toLocaleLowerCase();
   const storageIndices = new Map(books.map((book, index) => [book, index]));
   const list = document.getElementById('books');
   const overdueCount = books.filter((book) => isOverdue(book.due, now)).length;
@@ -80,7 +81,9 @@ function render() {
   list.onclick = (event) => returnBook(event.target, books, saved);
   let total = 0;
 
-  sortByDue(books).forEach((book) => {
+  sortByDue(books).filter((book) =>
+    String(book.title).toLocaleLowerCase().includes(query) || String(book.author).toLocaleLowerCase().includes(query)
+  ).forEach((book) => {
     const fee = lateFee(book.due, now);
     total += fee;
     const li = document.createElement('li');
@@ -118,6 +121,7 @@ function render() {
 }
 
 document.getElementById('export').addEventListener('click', exportBooks);
+document.getElementById('search').addEventListener('input', render);
 
 const addForm = document.getElementById('add');
 const addMessage = document.createElement('div');
