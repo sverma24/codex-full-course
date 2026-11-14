@@ -58,6 +58,8 @@ function openPage(books, now = [2026, 10, 14, 15]) {
     },
   };
   if (exportButton) elements[exportButton[1]] = button;
+  const searchInput = pageMarkup.match(/<input\b[^>]*\bid=["']search["'][^>]*>/i);
+  if (searchInput) elements.search = { value: '', addEventListener(event, handler) { this['on' + event] = handler; } };
   const context = createContext({
     Blob,
     setTimeout(callback) { callback(); },
@@ -99,6 +101,11 @@ function openPage(books, now = [2026, 10, 14, 15]) {
   return {
     rows,
     overdueCount: elements['overdue-count'],
+    search(value) {
+      assert.ok(searchInput, 'the page has a search input');
+      elements.search.value = value;
+      elements.search.oninput();
+    },
     async exportCsv() {
       assert.ok(exportButton, 'the page has an Export CSV button');
       button.onclick({ target: button, preventDefault() {} });
@@ -129,6 +136,22 @@ test('shows the number of overdue books in the header', () => {
 test('shows nothing in the header when no books are overdue', () => {
   const page = openPage([{ title: 'On time', author: 'Author', due: '2026-11-14' }]);
   assert.equal(page.overdueCount.textContent, '');
+});
+
+test('search filters books by title or author as the query changes', () => {
+  const page = openPage([
+    { title: 'Pride and Prejudice', author: 'Jane Austen', due: '2026-11-15' },
+    { title: 'Moby-Dick', author: 'Herman Melville', due: '2026-11-16' },
+    { title: 'Emma', author: 'Jane Austen', due: '2026-11-17' },
+  ]);
+
+  page.search('moby');
+  assert.equal(page.rows.length, 1);
+  assert.ok(page.rows[0].innerHTML.includes('Moby-Dick'));
+
+  page.search('aUsTeN');
+  assert.equal(page.rows.length, 2);
+  assert.ok(page.rows.every((row) => row.innerHTML.includes('Jane Austen')));
 });
 
 const statuses = [
