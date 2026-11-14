@@ -6,6 +6,29 @@ const { createContext, runInContext } = require('node:vm');
 const rulesScript = readFileSync(require.resolve('./books.js'), 'utf8');
 const pageScript = readFileSync(require.resolve('./app.js'), 'utf8');
 
+function createElement(tag) {
+  return {
+    tagName: tag.toUpperCase(),
+    className: '',
+    dataset: {},
+    textContent: '',
+    children: [],
+    setAttribute() {},
+    appendChild(child) {
+      this.children.push(child);
+    },
+    get innerHTML() {
+      const text = this.textContent.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+      return text + this.children.map((child) => child.outerHTML).join('');
+    },
+    get outerHTML() {
+      const classAttribute = this.className ? ' class="' + this.className + '"' : '';
+      const indexAttribute = this.dataset.index === undefined ? '' : ' data-index="' + this.dataset.index + '"';
+      return '<' + tag + classAttribute + indexAttribute + '>' + this.innerHTML + '</' + tag + '>';
+    },
+  };
+}
+
 function openPage(books) {
   const storage = new Map([['my-library-books', JSON.stringify(books)]]);
   const rows = [];
@@ -31,7 +54,7 @@ function openPage(books) {
     },
     document: {
       getElementById: (id) => elements[id],
-      createElement: () => ({ setAttribute() {} }),
+      createElement,
     },
     localStorage: {
       getItem: (key) => storage.get(key) ?? null,
@@ -46,9 +69,9 @@ function openPage(books) {
     rows,
     savedBooks: () => JSON.parse(storage.get('my-library-books')),
     clickReturned(row) {
-      const button = row.innerHTML.match(/<button data-index="([0-9]+)">Returned<\/button>/);
-      assert.ok(button, 'row has a Returned button');
-      list.onclick({ target: { tagName: 'BUTTON', dataset: { index: button[1] } } });
+      const button = row.children.find((child) => child.tagName === 'BUTTON');
+      assert.equal(button?.textContent, 'Returned');
+      list.onclick({ target: button });
     },
   };
 }
@@ -87,4 +110,9 @@ test('clicking Returned removes only the selected copy from legacy saved books',
   const reopened = openPage(page.savedBooks());
   reopened.clickReturned(reopened.rows[0]);
   assert.deepEqual(reopened.savedBooks(), [other]);
+});
+
+test('renders angle brackets in a book title as literal text', () => {
+  const page = openPage([{ title: '<b>Bold</b>', author: 'Bram Stoker', due: '2026-11-15' }]);
+  assert.ok(page.rows[0].innerHTML.includes('<strong>&lt;b&gt;Bold&lt;/b&gt;</strong>'));
 });

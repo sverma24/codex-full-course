@@ -33,6 +33,19 @@ function statusText(book, now) {
   return 'Due in ' + left + ' days';
 }
 
+function returnBook(button, books, saved) {
+  if (button.tagName !== 'BUTTON') return;
+
+  const index = Number(button.dataset.index);
+  if (!Number.isInteger(index) || index < 0 || index >= books.length) return;
+
+  const current = localStorage.getItem(STORAGE_KEY);
+  if (current === saved) {
+    save(books.filter((_, position) => position !== index));
+  }
+  render();
+}
+
 function render() {
   const now = new Date();
   const saved = localStorage.getItem(STORAGE_KEY);
@@ -40,15 +53,7 @@ function render() {
   const storageIndices = new Map(books.map((book, index) => [book, index]));
   const list = document.getElementById('books');
   list.innerHTML = '';
-  list.onclick = (e) => {
-    if (e.target.tagName !== 'BUTTON') return;
-    const index = Number(e.target.dataset.index);
-    if (!Number.isInteger(index) || index < 0 || index >= books.length) return;
-    if (localStorage.getItem(STORAGE_KEY) === saved) {
-      save(books.filter((book, position) => position !== index));
-    }
-    render();
-  };
+  list.onclick = (event) => returnBook(event.target, books, saved);
   let total = 0;
 
   sortByDue(books).forEach((book) => {
@@ -56,11 +61,30 @@ function render() {
     total += fee;
     const li = document.createElement('li');
     li.className = isOverdue(book.due, now) ? 'book late' : 'book';
-    li.innerHTML =
-      '<div><strong>' + book.title + '</strong><span>' + book.author + '</span></div>' +
-      '<div class="status">' + statusText(book, now) +
-      (fee > 0 ? '<b>$' + fee.toFixed(2) + '</b>' : '') + '</div>' +
-      '<button data-index="' + storageIndices.get(book) + '">Returned</button>';
+    const details = document.createElement('div');
+    const title = document.createElement('strong');
+    title.textContent = String(book.title);
+    const author = document.createElement('span');
+    author.textContent = String(book.author);
+    details.appendChild(title);
+    details.appendChild(author);
+
+    const status = document.createElement('div');
+    status.className = 'status';
+    status.textContent = statusText(book, now);
+    if (fee > 0) {
+      const amount = document.createElement('b');
+      amount.textContent = '$' + fee.toFixed(2);
+      status.appendChild(amount);
+    }
+
+    const returned = document.createElement('button');
+    returned.dataset.index = String(storageIndices.get(book));
+    returned.textContent = 'Returned';
+
+    li.appendChild(details);
+    li.appendChild(status);
+    li.appendChild(returned);
     list.appendChild(li);
   });
 
