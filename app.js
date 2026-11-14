@@ -7,7 +7,11 @@ const SAMPLE_BOOKS = [
   { title: 'Moby-Dick', author: 'Herman Melville', due: offset(-12) },
   { title: 'Frankenstein', author: 'Mary Shelley', due: offset(1) },
   { title: 'Walden', author: 'Henry David Thoreau', due: offset(-40) },
-  { title: 'Little Women', author: 'Louisa May Alcott', due: offset(20) }
+  { title: 'Little Women', author: 'Louisa May Alcott', due: offset(20) },
+  { title: 'The Call of the Wild', author: 'Jack London', due: '2026-11-28' },
+  { title: 'Heidi', author: 'Johanna Spyri', due: '2026-12-03' },
+  { title: 'Around the World in Eighty Days', author: 'Jules Verne', due: '2026-11-22' },
+  { title: 'The Secret Garden', author: 'Frances Hodgson Burnett', due: '2026-12-10' }
 ];
 
 // a date n days from today, as YYYY-MM-DD
