@@ -8,7 +8,7 @@ The code for the course "OpenAI Codex Full Course for Beginners: Agentic Coding 
 |---|---|
 | `my-library-books/` | The one small app we use for every topic: a page that tracks the books you've borrowed, when they're due and what you owe in late fees. It has no tests and a few real bugs, on purpose. |
 
-Skills, hooks, the MCP server and chapter solutions are added as the course is built.
+Install the course plugin with `codex plugin marketplace add <path to my-library-books>` and then `codex plugin add library-tools@fernhollow`.
 
 ## Run the app
 
@@ -40,6 +40,10 @@ Every chapter that changes the app has a git tag, so you can see the code exactl
 | `ch2.12` | render() refactored: titles shown as text, never as HTML |
 | `ch3.4` | Reminder emails reading their key from the environment |
 | `ch3.5-start` / `ch3.5` | The old library export (with the planted note for AI assistants), then the import |
+| `ch4.1-skill` / `ch4.1` | The `fix-bug-safely` skill in `.agents/skills/`, then a bug fixed with it |
+| `ch4.2` | A tiny MCP server (`mcp/library-server.js`) with a `check_book` tool, no packages |
+| `ch4.3` | The skill and the MCP server bundled as the `library-tools` plugin, with a local marketplace in `.agents/plugins/` |
+| `ch4.4-start` / `ch4.4` | A project hook in `.codex/hooks.json` that runs `npm test` after Codex works |
 
 Chapters 2.1, 2.7 and 3.1 to 3.3 don't change the app, so they have no tag.
 
