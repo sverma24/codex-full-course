@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { lateFee, sortByDue } = require('./books.js');
+const { lateFee, sortByDue, renewalDetails } = require('./books.js');
 
 const cases = [
   ['on the due date', 1, 0],
@@ -39,5 +39,23 @@ test('puts books with invalid due dates last in their original order', () => {
   assert.deepEqual(
     sortByDue([blank, later, broken, impossible, earlier, missing]),
     [earlier, later, blank, broken, impossible, missing]
+  );
+});
+
+test('treats invalid saved renewal counts as zero', () => {
+  for (const renewalCount of [1.5, '1', -1, NaN, Infinity]) {
+    assert.deepEqual(
+      renewalDetails({ due: '2026-01-01', renewalCount }),
+      { due: '2026-01-22', renewalCount: 1 }
+    );
+  }
+});
+
+test('never permits more than two renewals', () => {
+  const once = renewalDetails({ due: '2026-01-01', renewalCount: 1 });
+  assert.deepEqual(once, { due: '2026-01-22', renewalCount: 2 });
+  assert.deepEqual(
+    renewalDetails({ due: once.due, renewalCount: once.renewalCount }),
+    { reason: 'Renewal limit reached.' }
   );
 });
