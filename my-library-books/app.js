@@ -87,7 +87,9 @@ function render() {
     list.appendChild(li);
   });
 
-  document.getElementById('total').textContent = '$' + total.toFixed(2);
+  const totalAmount = document.getElementById('total');
+  totalAmount.textContent = '$' + total.toFixed(2);
+  totalAmount.className = total > 0 ? 'owed' : '';
 }
 
 const addForm = document.getElementById('add');
