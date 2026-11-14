@@ -46,6 +46,8 @@ Every chapter that changes the app has a git tag, so you can see the code exactl
 | `ch4.2` | A tiny MCP server (`mcp/library-server.js`) with a `check_book` tool, no packages |
 | `ch4.3` | The skill and the MCP server bundled as the `library-tools` plugin, with a local marketplace in `.agents/plugins/` |
 | `ch4.4-start` / `ch4.4` | A project hook in `.codex/hooks.json` that runs `npm test` after Codex works |
+| `ch5.1` | Export CSV, built by two subagents (implementer + independent tester) |
+| `ch5.2` | A search box and an overdue count, built at the same time in two worktrees, then merged |
 | `ch4.6` | The late-fees total moved into a red box above the list, asked for with an annotation in the in-app browser |
 
 Chapters 2.1, 2.7, 3.1 to 3.3 and 4.5 don't change the app, so they have no tag.
