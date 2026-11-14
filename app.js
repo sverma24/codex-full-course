@@ -32,6 +32,29 @@ function save(books) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
 }
 
+function csvField(value) {
+  const text = String(value ?? '');
+  return /[",\r\n]/.test(text) ? '"' + text.replaceAll('"', '""') + '"' : text;
+}
+
+function exportBooks() {
+  const now = new Date();
+  const rows = ['title,author,due_date,late_fee'];
+  for (const book of sortByDue(load())) {
+    const fee = lateFee(book.due, now);
+    const amount = Number.isFinite(fee) ? fee.toFixed(2) : '';
+    rows.push([book.title, book.author, book.due, amount].map(csvField).join(','));
+  }
+
+  const csv = new Blob([rows.join('\r\n') + '\r\n'], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(csv);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'books.csv';
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
 function returnBook(button, books, saved) {
   if (button.tagName !== 'BUTTON') return;
 
@@ -91,6 +114,8 @@ function render() {
   totalAmount.textContent = '$' + total.toFixed(2);
   totalAmount.className = total > 0 ? 'owed' : '';
 }
+
+document.getElementById('export').addEventListener('click', exportBooks);
 
 const addForm = document.getElementById('add');
 const addMessage = document.createElement('div');
