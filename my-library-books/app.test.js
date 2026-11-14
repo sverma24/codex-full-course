@@ -50,8 +50,26 @@ function openPage(books, now = [2026, 10, 14, 15]) {
     books: list,
     total: {},
     'overdue-count': {},
-    add: { after() {}, addEventListener() {} },
+    add: {
+      after() {},
+      addEventListener(event, handler) {
+        this['on' + event] = handler;
+      },
+    },
   };
+  const bannerMarkup = pageMarkup.match(/<section\b[^>]*\bid="due-soon"[^>]*>([\s\S]*?)<\/section>/i);
+  if (bannerMarkup) {
+    elements['due-soon'] = createElement('section');
+    if (/<ul\b[^>]*\bid="due-soon-books"/i.test(bannerMarkup[1])) {
+      elements['due-soon-books'] = createElement('ul');
+      Object.defineProperty(elements['due-soon-books'], 'innerHTML', {
+        set(value) {
+          assert.equal(value, '');
+          this.children.length = 0;
+        },
+      });
+    }
+  }
   const button = {
     addEventListener(event, handler) {
       this['on' + event] = handler;
@@ -100,7 +118,14 @@ function openPage(books, now = [2026, 10, 14, 15]) {
 
   return {
     rows,
+    total: elements.total,
     overdueCount: elements['overdue-count'],
+    banner: elements['due-soon'],
+    bannerEntries: () => elements['due-soon-books'].children.map((entry) => entry.textContent),
+    addBook({ title, author, due }) {
+      const form = { title: { value: title }, author: { value: author }, due: { value: due }, reset() {} };
+      elements.add.onsubmit({ target: form, preventDefault() {} });
+    },
     search(value) {
       assert.ok(searchInput, 'the page has a search input');
       elements.search.value = value;
@@ -116,6 +141,17 @@ function openPage(books, now = [2026, 10, 14, 15]) {
       return (await blob.text()).replaceAll('\r\n', '\n').trimEnd();
     },
     savedBooks: () => JSON.parse(storage.get('my-library-books')),
+    overwriteSavedBooks(books) {
+      storage.set('my-library-books', JSON.stringify(books));
+    },
+    renewalButton(row) {
+      const button = row.children.find((child) => child.tagName === 'BUTTON' && child.textContent === 'Renewed');
+      assert.ok(button, 'the row has a Renewed button');
+      return button;
+    },
+    clickRenewed(row) {
+      list.onclick({ target: this.renewalButton(row) });
+    },
     clickReturned(row) {
       const button = row.children.find((child) => child.tagName === 'BUTTON');
       assert.equal(button?.textContent, 'Returned');
@@ -123,6 +159,58 @@ function openPage(books, now = [2026, 10, 14, 15]) {
     },
   };
 }
+
+test('Due soon lists today first, then the next three local calendar days', () => {
+  const page = openPage([
+    { title: 'Day three', due: '2026-11-17' },
+    { title: '<b>Today</b>', due: '2026-11-14' },
+    { title: 'Day four', due: '2026-11-18' },
+    { title: 'Overdue', due: '2026-11-13' },
+    { title: 'Tomorrow', due: '2026-11-15' },
+    { title: 'Second today', due: '2026-11-14' },
+    { title: 'Day two', due: '2026-11-16' },
+    { title: 'Invalid', due: '' },
+  ], [2026, 10, 14, 0, 5]);
+
+  assert.ok(page.banner, 'the page has a Due soon section');
+  assert.equal(page.banner.hidden, false);
+  const entries = [
+    '<b>Today</b> (Due today)',
+    'Second today (Due today)',
+    'Tomorrow (Due tomorrow)',
+    'Day two (Due in 2 days)',
+    'Day three (Due in 3 days)',
+  ];
+  assert.deepEqual(page.bannerEntries(), entries);
+  page.search('day three');
+  assert.equal(page.rows.length, 1);
+  assert.deepEqual(page.bannerEntries(), entries);
+});
+
+test('Due soon appears after adding a qualifying book and hides after returning it', () => {
+  const page = openPage([]);
+  assert.ok(page.banner, 'the page has a Due soon section');
+  assert.equal(page.banner.hidden, true);
+  page.addBook({ title: 'Dracula', author: 'Bram Stoker', due: '2026-11-14' });
+  assert.equal(page.banner.hidden, false);
+  assert.deepEqual(page.bannerEntries(), ['Dracula (Due today)']);
+  page.clickReturned(page.rows[0]);
+  assert.equal(page.banner.hidden, true);
+  assert.deepEqual(page.bannerEntries(), []);
+});
+
+test('Due soon updates when renewal moves a due date into or out of its window', () => {
+  const page = openPage([
+    { title: 'Overdue', due: '2026-10-25' },
+    { title: 'Today', due: '2026-11-14' },
+  ]);
+
+  assert.deepEqual(page.bannerEntries(), ['Today (Due today)']);
+  page.clickRenewed(page.rows[0]);
+  assert.deepEqual(page.bannerEntries(), ['Today (Due today)', 'Overdue (Due tomorrow)']);
+  page.clickRenewed(page.rows[0]);
+  assert.deepEqual(page.bannerEntries(), ['Overdue (Due tomorrow)']);
+});
 
 test('shows the number of overdue books in the header', () => {
   const page = openPage([
@@ -229,4 +317,57 @@ test('Export CSV downloads a header for an empty list', async () => {
   const page = openPage([]);
   const csv = await page.exportCsv();
   assert.match(csv.replaceAll('"', '').toLowerCase(), /^title,author,due[ _]date,late[ _]fee$/);
+});
+
+test('renewing one legacy copy twice persists its date and limit after reload', () => {
+  const copy = { title: 'Dracula', author: 'Bram Stoker', due: '2026-12-20' };
+  const page = openPage([copy, { ...copy }]);
+  page.clickRenewed(page.rows[1]);
+
+  const saved = page.savedBooks();
+  assert.deepEqual(saved[0], copy);
+  assert.equal(saved[1].due, '2027-01-10');
+  const reopened = openPage(saved);
+  assert.equal(reopened.renewalButton(reopened.rows[1]).disabled, false);
+  reopened.clickRenewed(reopened.rows[1]);
+
+  const reopenedAgain = openPage(reopened.savedBooks());
+  assert.equal(reopenedAgain.savedBooks()[1].due, '2027-01-31');
+  assert.equal(reopenedAgain.renewalButton(reopenedAgain.rows[1]).disabled, true);
+  assert.match(reopenedAgain.rows[1].innerHTML, /renewal limit/i);
+  reopenedAgain.clickRenewed(reopenedAgain.rows[1]);
+  assert.deepEqual(reopenedAgain.savedBooks(), reopened.savedBooks());
+});
+
+test('renewing an overdue book refreshes order, fees, status, count and CSV', async () => {
+  const late = { title: 'Late book', author: 'Author', due: '2026-11-13' };
+  const today = { ...late, title: 'Today', due: '2026-11-14' };
+  const page = openPage([late, today]);
+  assert.equal(page.total.textContent, '$0.25');
+  page.clickRenewed(page.rows[0]);
+  assert.equal(page.overdueCount.textContent, '');
+  assert.equal(page.total.textContent, '$0.00');
+  assert.match(page.rows[0].innerHTML, /<strong>Today<\/strong>/);
+  assert.match(page.rows[1].innerHTML, /Due in 20 days/);
+  assert.match(await page.exportCsv(), /Late book,Author,2026-12-04,0\.00/);
+});
+
+test('invalid dates and dates that cannot be extended have disabled renewal controls', () => {
+  const books = ['2026-02-30', '', '9999-12-31'].map((due) => ({ title: due, due }));
+  const page = openPage(books);
+  for (const row of page.rows.slice()) {
+    assert.equal(page.renewalButton(row).disabled, true);
+    page.clickRenewed(row);
+  }
+  assert.deepEqual(page.savedBooks(), books);
+});
+
+test('a stale renewal control refreshes the list without modifying saved books', () => {
+  const original = { title: 'Original', due: '2026-11-15' };
+  const replacement = { title: 'Replacement', due: '2026-11-16' };
+  const page = openPage([original]);
+  page.overwriteSavedBooks([replacement]);
+  page.clickRenewed(page.rows[0]);
+  assert.deepEqual(page.savedBooks(), [replacement]);
+  assert.match(page.rows[0].innerHTML, /Replacement/);
 });
