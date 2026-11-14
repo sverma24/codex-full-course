@@ -29,8 +29,9 @@ function createElement(tag) {
   };
 }
 
-function openPage(books) {
-  const storage = new Map([['my-library-books', JSON.stringify(books)]]);
+function openPage(books, now = [2026, 10, 14, 15]) {
+  const storage = new Map();
+  if (books !== undefined) storage.set('my-library-books', JSON.stringify(books));
   const rows = [];
   const list = {
     set innerHTML(value) {
@@ -49,7 +50,7 @@ function openPage(books) {
   const context = createContext({
     Date: class extends Date {
       constructor(...args) {
-        super(...(args.length ? args : [2026, 10, 14, 15]));
+        super(...(args.length ? args : now));
       }
     },
     document: {
@@ -115,4 +116,17 @@ test('clicking Returned removes only the selected copy from legacy saved books',
 test('renders angle brackets in a book title as literal text', () => {
   const page = openPage([{ title: '<b>Bold</b>', author: 'Bram Stoker', due: '2026-11-15' }]);
   assert.ok(page.rows[0].innerHTML.includes('<strong>&lt;b&gt;Bold&lt;/b&gt;</strong>'));
+});
+
+test('Frankenstein is due tomorrow on first open just after midnight in India', () => {
+  const previousTimezone = process.env.TZ;
+  process.env.TZ = 'Asia/Kolkata';
+  try {
+    const page = openPage(undefined, [2026, 10, 14, 0, 5]);
+    const row = page.rows.find((row) => row.children[0].children[0].textContent === 'Frankenstein');
+    assert.equal(row?.children[1].textContent, 'Due tomorrow');
+  } finally {
+    if (previousTimezone === undefined) delete process.env.TZ;
+    else process.env.TZ = previousTimezone;
+  }
 });
