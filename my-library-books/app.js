@@ -57,6 +57,8 @@ function render() {
   document.getElementById('total').textContent = '$' + total.toFixed(2);
 }
 
+// TODO(codex): if the title or the due date is empty, don't save the book.
+// Show a short message under the form instead, like "Please add a title and a due date."
 document.getElementById('add').addEventListener('submit', (e) => {
   e.preventDefault();
   const form = e.target;
