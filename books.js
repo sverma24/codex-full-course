@@ -49,6 +49,19 @@ function dueSortKey(due) {
   return day;
 }
 
+function renewalDetails(book) {
+  const renewalCount = book.renewalCount ?? 0;
+  if (renewalCount >= 2) return { reason: 'Renewal limit reached.' };
+
+  const day = dueSortKey(book.due);
+  if (day === Infinity) return { reason: 'A valid due date is required.' };
+
+  const extended = new Date(day + 21 * DAY).toISOString();
+  if (!/^\d{4}-/.test(extended)) return { reason: 'The new due date is out of range.' };
+
+  return { due: extended.slice(0, 10), renewalCount: renewalCount + 1 };
+}
+
 // Soonest due first, with invalid dates last in their original order.
 function sortByDue(books) {
   return books.slice().sort((a, b) => {
@@ -58,6 +71,14 @@ function sortByDue(books) {
   });
 }
 
+function dueSoonBooks(books, now) {
+  const today = calendarDay(now);
+  return sortByDue(books).filter((book) => {
+    const left = (dueSortKey(book.due) - today) / DAY;
+    return left >= 0 && left <= 3;
+  });
+}
+
 if (typeof module !== 'undefined') {
-  module.exports = { FEE_PER_DAY, FEE_CAP, daysLeft, isOverdue, lateFee, statusText, sortByDue };
+  module.exports = { FEE_PER_DAY, FEE_CAP, daysLeft, isOverdue, lateFee, statusText, sortByDue, dueSoonBooks, renewalDetails };
 }

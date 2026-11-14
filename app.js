@@ -55,30 +55,52 @@ function exportBooks() {
   setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
-function returnBook(button, books, saved) {
-  if (button.tagName !== 'BUTTON') return;
+function handleBookAction(button, books, saved) {
+  if (button.tagName !== 'BUTTON' || button.disabled) return;
 
   const index = Number(button.dataset.index);
   if (!Number.isInteger(index) || index < 0 || index >= books.length) return;
 
-  const current = localStorage.getItem(STORAGE_KEY);
-  if (current === saved) {
+  if (localStorage.getItem(STORAGE_KEY) !== saved) {
+    render();
+    return;
+  }
+
+  if (button.dataset.action === 'renew') {
+    const renewal = renewalDetails(books[index]);
+    if (renewal.reason) return;
+    save(books.map((book, position) => position === index ? { ...book, ...renewal } : book));
+  } else if (button.dataset.action === 'return') {
     save(books.filter((_, position) => position !== index));
   }
   render();
+}
+
+function renderDueSoon(books, now) {
+  const banner = document.getElementById('due-soon');
+  const list = document.getElementById('due-soon-books');
+  const upcoming = dueSoonBooks(books, now);
+  list.innerHTML = '';
+  for (const book of upcoming) {
+    const entry = document.createElement('li');
+    entry.textContent = String(book.title) + ' (' + statusText(book, now) + ')';
+    list.appendChild(entry);
+  }
+  banner.hidden = upcoming.length === 0;
 }
 
 function render() {
   const now = new Date();
   const saved = localStorage.getItem(STORAGE_KEY);
   const books = load(saved);
+  renderDueSoon(books, now);
   const query = document.getElementById('search').value.trim().toLocaleLowerCase();
   const storageIndices = new Map(books.map((book, index) => [book, index]));
   const list = document.getElementById('books');
   const overdueCount = books.filter((book) => isOverdue(book.due, now)).length;
   document.getElementById('overdue-count').textContent = overdueCount ? overdueCount + ' overdue' : '';
   list.innerHTML = '';
-  list.onclick = (event) => returnBook(event.target, books, saved);
+  list.onclick = (event) => handleBookAction(event.target, books, saved);
   let total = 0;
 
   sortByDue(books).filter((book) =>
@@ -107,11 +129,26 @@ function render() {
 
     const returned = document.createElement('button');
     returned.dataset.index = String(storageIndices.get(book));
+    returned.dataset.action = 'return';
     returned.textContent = 'Returned';
+
+    const renewed = document.createElement('button');
+    renewed.dataset.index = returned.dataset.index;
+    renewed.dataset.action = 'renew';
+    renewed.textContent = 'Renewed';
+    const renewal = renewalDetails(book);
+    renewed.disabled = Boolean(renewal.reason);
 
     li.appendChild(details);
     li.appendChild(status);
     li.appendChild(returned);
+    li.appendChild(renewed);
+    if (renewal.reason) {
+      const reason = document.createElement('span');
+      reason.className = 'renewal-reason';
+      reason.textContent = renewal.reason;
+      li.appendChild(reason);
+    }
     list.appendChild(li);
   });
 
