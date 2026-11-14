@@ -1,0 +1,12 @@
+{
+  "name": "fernhollow",
+  "interface": { "displayName": "Fernhollow Library" },
+  "plugins": [
+    {
+      "name": "library-tools",
+      "source": { "source": "local", "path": "./plugins/library-tools" },
+      "policy": { "installation": "AVAILABLE" },
+      "category": "Developer Tools"
+    }
+  ]
+}
