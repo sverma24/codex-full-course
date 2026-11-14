@@ -1,0 +1,33 @@
+body {
+  font-family: Georgia, 'Times New Roman', serif;
+  margin: 0;
+  background: #f7f4ec;
+  color: #2b2a26;
+}
+.top {
+  background: #2f4a3a;
+  color: #fff;
+  padding: 14px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.top a { color: #fff; text-decoration: none; margin-left: 18px; }
+.top .brand { font-size: 22px; margin-left: 0; font-weight: bold; }
+main { max-width: 960px; margin: 0 auto; padding: 24px; }
+h1 { color: #2f4a3a; }
+.byline { color: #6b6658; }
+table { border-collapse: collapse; width: 900px; background: #fff; margin: 10px 0 20px; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid #e3ddcc; }
+th { background: #ebe5d3; }
+.ok { color: #2d7a3e; }
+.no { color: #b23b2b; }
+.flash { background: #fff6cf; border: 1px solid #e8d77a; padding: 10px 14px; }
+.search input { width: 320px; padding: 8px; font-size: 16px; }
+button { background: #2f4a3a; color: #fff; border: 0; padding: 8px 14px; font-size: 15px; cursor: pointer; }
+button.small { padding: 4px 8px; font-size: 13px; }
+.cols { display: flex; flex-wrap: wrap; gap: 16px; }
+.card { background: #fff; padding: 14px 18px; border: 1px solid #e3ddcc; }
+.card label { display: block; margin: 8px 0; }
+label input, label select { display: block; margin-top: 4px; padding: 6px; font-size: 15px; }
+footer { text-align: center; color: #6b6658; padding: 30px; font-size: 14px; }
