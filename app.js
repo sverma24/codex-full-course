@@ -18,7 +18,10 @@ const SAMPLE_BOOKS = [
 function offset(n) {
   const d = new Date();
   d.setDate(d.getDate() + n);
-  return d.toISOString().slice(0, 10);
+  const year = String(d.getFullYear()).padStart(4, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return year + '-' + month + '-' + day;
 }
 
 function load(saved = localStorage.getItem(STORAGE_KEY)) {
