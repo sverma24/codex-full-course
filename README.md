@@ -8,6 +8,8 @@ The code for the course "OpenAI Codex Full Course for Beginners: Agentic Coding 
 |---|---|
 | `my-library-books/` | The one small app we use for every topic: a page that tracks the books you've borrowed, when they're due and what you owe in late fees. It has no tests and a few real bugs, on purpose. |
 
+The terminal extras (profile, rules, review schema, pre-push hook) are in `extras/`.
+
 Install the course plugin with `codex plugin marketplace add <path to my-library-books>` and then `codex plugin add library-tools@fernhollow`.
 
 ## Run the app

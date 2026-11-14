@@ -1,0 +1,3 @@
+# Commands Codex may never run in this course
+prefix_rule(pattern=["rm"], decision="forbidden")
+prefix_rule(pattern=["git", "push"], decision="forbidden")

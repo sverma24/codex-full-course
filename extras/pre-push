@@ -1,0 +1,17 @@
+#!/bin/sh
+# Before anything leaves this machine: run the tests, then ask Codex to review
+# the commits being pushed. A P1 finding blocks the push.
+CODEX=/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex
+
+echo "pre-push: running tests..."
+npm test --silent > /tmp/pre-push-tests.txt 2>&1 || { cat /tmp/pre-push-tests.txt; echo "pre-push: tests failed, push blocked."; exit 1; }
+echo "pre-push: tests passed."
+
+echo "pre-push: asking Codex to review the commits against origin/main..."
+review=$("$CODEX" review --base origin/main < /dev/null 2>/dev/null)
+echo "$review"
+if echo "$review" | grep -q "\[P1\]"; then
+  echo "pre-push: Codex found a P1 issue, push blocked."
+  exit 1
+fi
+echo "pre-push: no P1 issues, pushing."

@@ -1,0 +1,3 @@
+# "careful" profile: look, don't touch
+sandbox_mode = "read-only"
+model_reasoning_effort = "low"
