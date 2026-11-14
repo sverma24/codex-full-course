@@ -7,6 +7,7 @@ const cases = [
   ['one day late', 2, 0.25],
   ['19 days late', 20, 4.75],
   ['20 days late', 21, 5],
+  ['21 days late', 22, 5],
   ['40 days late', 41, 5],
 ];
 
