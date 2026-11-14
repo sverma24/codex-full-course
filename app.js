@@ -17,8 +17,7 @@ function offset(n) {
   return d.toISOString().slice(0, 10);
 }
 
-function load() {
-  const saved = localStorage.getItem(STORAGE_KEY);
+function load(saved = localStorage.getItem(STORAGE_KEY)) {
   return saved ? JSON.parse(saved) : SAMPLE_BOOKS;
 }
 
@@ -36,12 +35,23 @@ function statusText(book, now) {
 
 function render() {
   const now = new Date();
-  const books = sortByDue(load());
+  const saved = localStorage.getItem(STORAGE_KEY);
+  const books = load(saved);
+  const storageIndices = new Map(books.map((book, index) => [book, index]));
   const list = document.getElementById('books');
   list.innerHTML = '';
+  list.onclick = (e) => {
+    if (e.target.tagName !== 'BUTTON') return;
+    const index = Number(e.target.dataset.index);
+    if (!Number.isInteger(index) || index < 0 || index >= books.length) return;
+    if (localStorage.getItem(STORAGE_KEY) === saved) {
+      save(books.filter((book, position) => position !== index));
+    }
+    render();
+  };
   let total = 0;
 
-  books.forEach((book) => {
+  sortByDue(books).forEach((book) => {
     const fee = lateFee(book.due, now);
     total += fee;
     const li = document.createElement('li');
@@ -50,7 +60,7 @@ function render() {
       '<div><strong>' + book.title + '</strong><span>' + book.author + '</span></div>' +
       '<div class="status">' + statusText(book, now) +
       (fee > 0 ? '<b>$' + fee.toFixed(2) + '</b>' : '') + '</div>' +
-      '<button data-title="' + book.title + '">Returned</button>';
+      '<button data-index="' + storageIndices.get(book) + '">Returned</button>';
     list.appendChild(li);
   });
 
@@ -75,12 +85,6 @@ addForm.addEventListener('submit', (e) => {
   books.push({ title: form.title.value, author: form.author.value, due: form.due.value });
   save(books);
   form.reset();
-  render();
-});
-
-document.getElementById('books').addEventListener('click', (e) => {
-  if (e.target.tagName !== 'BUTTON') return;
-  save(load().filter((b) => b.title !== e.target.dataset.title));
   render();
 });
 
