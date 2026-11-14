@@ -4,6 +4,7 @@ const test = require('node:test');
 const { createContext, runInContext } = require('node:vm');
 
 const rulesScript = readFileSync(require.resolve('./books.js'), 'utf8');
+const pageMarkup = readFileSync(require.resolve('./index.html'), 'utf8');
 const pageScript = readFileSync(require.resolve('./app.js'), 'utf8');
 
 function createElement(tag) {
@@ -42,12 +43,33 @@ function openPage(books, now = [2026, 10, 14, 15]) {
       rows.push(row);
     },
   };
+  const downloads = [];
+  const blobs = new Map();
+  const exportButton = pageMarkup.match(/<button\b[^>]*\bid=["']([^"']+)["'][^>]*>\s*Export CSV\s*<\/button>/i);
   const elements = {
     books: list,
     total: {},
     add: { after() {}, addEventListener() {} },
   };
+  const button = {
+    addEventListener(event, handler) {
+      this['on' + event] = handler;
+    },
+  };
+  if (exportButton) elements[exportButton[1]] = button;
   const context = createContext({
+    Blob,
+    setTimeout(callback) { callback(); },
+    URL: {
+      createObjectURL(blob) {
+        const url = 'blob:books-' + blobs.size;
+        blobs.set(url, blob);
+        return url;
+      },
+      revokeObjectURL(url) {
+        blobs.delete(url);
+      },
+    },
     Date: class extends Date {
       constructor(...args) {
         super(...(args.length ? args : now));
@@ -55,7 +77,14 @@ function openPage(books, now = [2026, 10, 14, 15]) {
     },
     document: {
       getElementById: (id) => elements[id],
-      createElement,
+      createElement(tag) {
+        if (tag !== 'a') return createElement(tag);
+        return {
+          click() {
+            downloads.push({ filename: this.download, blob: blobs.get(this.href) });
+          },
+        };
+      },
     },
     localStorage: {
       getItem: (key) => storage.get(key) ?? null,
@@ -68,6 +97,15 @@ function openPage(books, now = [2026, 10, 14, 15]) {
 
   return {
     rows,
+    async exportCsv() {
+      assert.ok(exportButton, 'the page has an Export CSV button');
+      button.onclick({ target: button, preventDefault() {} });
+      assert.equal(downloads.length, 1);
+      const [{ filename, blob }] = downloads.splice(0);
+      assert.equal(filename, 'books.csv');
+      assert.match(blob.type, /^text\/csv\b/i);
+      return (await blob.text()).replaceAll('\r\n', '\n').trimEnd();
+    },
     savedBooks: () => JSON.parse(storage.get('my-library-books')),
     clickReturned(row) {
       const button = row.children.find((child) => child.tagName === 'BUTTON');
@@ -129,4 +167,27 @@ test('Frankenstein is due tomorrow on first open just after midnight in India', 
     if (previousTimezone === undefined) delete process.env.TZ;
     else process.env.TZ = previousTimezone;
   }
+});
+
+test('Export CSV downloads the current books with escaped fields and calculated fees', async () => {
+  const overdue = { title: 'A "quoted", title', author: 'First\nLast', due: '2026-10-01' };
+  const current = { title: 'Today', author: 'An Author', due: '2026-11-14' };
+  const removed = { title: 'Returned Book', author: 'Another Author', due: '2026-11-13' };
+  const page = openPage([overdue, removed, current]);
+  const returnedRow = page.rows.find((row) => row.innerHTML.includes('Returned Book'));
+  page.clickReturned(returnedRow);
+
+  const csv = await page.exportCsv();
+  const header = csv.slice(0, csv.indexOf('\n')).replaceAll('"', '').toLowerCase();
+  assert.match(header, /^title,author,due[ _]date,late[ _]fee$/);
+  assert.match(csv, /(?:^|\n)"A ""quoted"", title","First\nLast","?2026-10-01"?,"?\$?5\.00"?(?:\n|$)/);
+  assert.match(csv, /(?:^|\n)"?Today"?,"?An Author"?,"?2026-11-14"?,"?\$?0\.00"?(?:\n|$)/);
+  assert.doesNotMatch(csv, /Returned Book/);
+  assert.deepEqual(page.savedBooks(), [overdue, current]);
+});
+
+test('Export CSV downloads a header for an empty list', async () => {
+  const page = openPage([]);
+  const csv = await page.exportCsv();
+  assert.match(csv.replaceAll('"', '').toLowerCase(), /^title,author,due[ _]date,late[ _]fee$/);
 });
