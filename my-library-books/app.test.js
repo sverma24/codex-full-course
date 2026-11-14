@@ -58,7 +58,7 @@ function openPage(books) {
 }
 
 const statuses = [
-  ['one day late (current plural wording)', '2026-11-13', 'Overdue by 1 days', '<b>$0.25</b>'],
+  ['one day late', '2026-11-13', 'Overdue by 1 day', '<b>$0.25</b>'],
   ['due today', '2026-11-14', 'Due today', ''],
   ['due tomorrow', '2026-11-15', 'Due tomorrow', ''],
   ['due later', '2026-11-19', 'Due in 5 days', ''],
