@@ -74,6 +74,8 @@ function render() {
   const books = load(saved);
   const storageIndices = new Map(books.map((book, index) => [book, index]));
   const list = document.getElementById('books');
+  const overdueCount = books.filter((book) => isOverdue(book.due, now)).length;
+  document.getElementById('overdue-count').textContent = overdueCount ? overdueCount + ' overdue' : '';
   list.innerHTML = '';
   list.onclick = (event) => returnBook(event.target, books, saved);
   let total = 0;

@@ -49,6 +49,7 @@ function openPage(books, now = [2026, 10, 14, 15]) {
   const elements = {
     books: list,
     total: {},
+    'overdue-count': {},
     add: { after() {}, addEventListener() {} },
   };
   const button = {
@@ -97,6 +98,7 @@ function openPage(books, now = [2026, 10, 14, 15]) {
 
   return {
     rows,
+    overdueCount: elements['overdue-count'],
     async exportCsv() {
       assert.ok(exportButton, 'the page has an Export CSV button');
       button.onclick({ target: button, preventDefault() {} });
@@ -114,6 +116,20 @@ function openPage(books, now = [2026, 10, 14, 15]) {
     },
   };
 }
+
+test('shows the number of overdue books in the header', () => {
+  const page = openPage([
+    { title: 'Late one', author: 'Author', due: '2026-11-13' },
+    { title: 'Late two', author: 'Author', due: '2026-11-01' },
+    { title: 'Due today', author: 'Author', due: '2026-11-14' },
+  ]);
+  assert.equal(page.overdueCount.textContent, '2 overdue');
+});
+
+test('shows nothing in the header when no books are overdue', () => {
+  const page = openPage([{ title: 'On time', author: 'Author', due: '2026-11-14' }]);
+  assert.equal(page.overdueCount.textContent, '');
+});
 
 const statuses = [
   ['one day late', '2026-11-13', 'Overdue by 1 day', '<b>$0.25</b>'],
